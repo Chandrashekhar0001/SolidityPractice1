@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract lottery{
+
+    address[2] candidates;
+    uint public lotterysize = 5;
+    uint public winningAmount = 4 ether;
+    address private  manager;
+    uint public entryAmount = 1 ether;
+    uint private count =0;
+
+    constructor() {
+        manager = msg.sender;
+    }
+
+    mapping (address=>bool) called;
+
+    function getEntry() public payable{
+        require(msg.sender != manager, "you are not canditate");
+        require(msg.value == 1 ether,"minimum amount is 1 ether");
+        require(!called[msg.sender], "already entered");
+
+        called[msg.sender] = true; 
+        
+        address _address = msg.sender;
+        candidates[count] = _address;
+        count++; 
+    }
+
+    function random()private  view returns (uint){
+        return  uint(keccak256(abi.encode(block.difficulty,block.timestamp)));  
+    }
+
+    bool check ;
+
+    function choseWinner()public returns (address ){
+        require(msg.sender == manager, "you are not manager");
+        require(check == false, "call once at a time");
+        check = true;
+        uint winner = random() % 5;
+        return candidates[winner];
+    }    
+}
