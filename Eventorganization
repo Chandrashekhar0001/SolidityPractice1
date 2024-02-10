@@ -1,0 +1,52 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+struct Details{
+    string name;
+    uint age;
+}
+
+contract eventorganization{
+    uint private totaltickets = 2;
+    uint public ticketprice = 1 ether;
+    address private  manager;
+    uint public ticketbooked;
+    uint public id;
+
+    Details private  s1;
+
+    constructor(){
+        manager = msg.sender;
+    }
+
+    function ticketsAvailable()public view returns(uint){
+        uint tickets = totaltickets - ticketbooked;
+        return tickets;
+    }
+
+    function getBalance()public view returns (uint){
+        require(msg.sender == manager);
+        return address(this).balance;
+    }
+
+    function random()private  view returns (uint){
+        return  uint(keccak256(abi.encode(block.difficulty,block.timestamp)));
+        
+    }
+
+    function getTicket(string memory _name,uint _age)public payable  {
+        require(ticketbooked < totaltickets);
+        s1.name = _name;
+        s1.age = _age;
+        require(msg.value == 1 ether, "pay fees");
+        id = random() % 10000000;
+        ticketbooked++;
+        
+    }
+
+    function getINFO()public view returns (Details memory){
+        return s1;
+    }
+
+
+}
