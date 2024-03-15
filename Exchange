@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Exchange{
+    address public owner;
+    mapping (address => mapping (address => uint)) public balances;
+    mapping (address => bool) public authorizedToken;
+    uint public fee = 0.1 ether;
+
+    event Deposite(address indexed token,address indexed user,uint amount);
+    event Withdraw(address indexed token,address indexed user,uint amount);
+    event Trade(address indexed token,address indexed buyer,address indexed seller,uint amount,uint price);
+
+    constructor(){
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner(){
+        require(msg.sender == owner,"Only owner can call this function");
+        _;
+    }
+
+    function deposite(address token,uint amount)public {
+        require(authorizedToken[token],"Token is not authorized");
+        require(amount > 0,"Amount is greater than 0");
+
+        balances[token][msg.sender] += amount;
+        emit Deposite(token,msg.sender, amount);
+    }
+
+    function withdraw(address token, uint amount)public {
+        require(balances[token][msg.sender] >= amount,"Insufficient funds");
+
+        balances[token][msg.sender] -=amount;
+        emit Withdraw(token, msg.sender, amount);
+    }
+
+    function authorizeToken(address token)public onlyOwner{
+        authorizedToken[token] = true;
+    }
+
+    function revokeToken(address token) public onlyOwner{
+        authorizedToken[token] = false;
+    }
+
+    function setFee(uint newFee)public onlyOwner{
+        fee = newFee;
+    }
+
+    function trade(address token,address seller,uint amount,uint price)public payable {
+        require(msg.value == fee,"Insufficient fee");
+        require(balances[token][seller] >= amount,"Insufficient balance");
+        require(balances[address(this)][msg.sender] >= amount * price,"insufficent ");
+
+        balances[token][seller] -= amount;
+        balances[token][msg.sender] += amount;
+        balances[address(this)][msg.sender] -= amount * price;
+        balances[address(this)][seller] += amount * price;
+
+        emit Trade(token, msg.sender, seller,amount,price);
+    }
+}
